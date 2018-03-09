@@ -3,7 +3,6 @@ class ControllerExtensionPaymentCardknox extends Controller {
 	public function index() {
 
 		$this->load->language('extension/payment/cardknox');
-		var_dump("test");
 		$data['months'] = array();
 
 		for ($i = 1; $i <= 12; $i++) {
@@ -25,6 +24,8 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		}
 		$log = new Log('LOG_NAME.log');
 		$this->log->write('TEXT = ');
+		$data['cardknox_token_key'] = $this->config->get('payment_cardknox_token_key');
+		// $this->document->addScript('https://cdn.cardknox.com/ifields/ifields.min.js');
 		return $this->load->view('extension/payment/cardknox', $data);
 	}
 
@@ -57,9 +58,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$data['xAmount'] = $this->currency->format($order_info['total'], $order_info['currency_code'], 1.00000, false);
 		$data['xCurrency'] = $this->session->data['currency'];
 		$data['xCommand'] = ($this->config->get('payment_cardknox_method') == 'capture') ? 'cc:sale' : 'cc:authonly';
-		$data['xCardNum'] = str_replace(' ', '', $this->request->post['cc_number']);
+		$data['xCardNum'] = $this->request->post['xCardNum'];
 		$data['xExp'] = $this->request->post['cc_expire_date_month'] . substr($this->request->post['cc_expire_date_year'],2,2);
-		$data['xCVV'] = $this->request->post['cc_cvv2'];
+		$data['xCVV'] = $this->request->post['xCVV'];
 		$data['xInvoice'] = $this->session->data['order_id'];
 
 		/* Customer Shipping Address Fields */
