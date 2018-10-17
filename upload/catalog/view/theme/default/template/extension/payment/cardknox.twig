@@ -10,7 +10,7 @@
         <div class="form-group required">
             <label class="col-sm-2 control-label" for="input-cc-number">{{ entry_cc_number }}</label>
             <div class="col-sm-10">
-                <iframe data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/ifield.htm" frameborder="0" width="100%" height="33"></iframe>
+                <iframe data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/2.3.1808.2101/ifield.htm" frameborder="0" width="100%" height="34"></iframe>
                 <input data-ifields-id="card-number-token" name="xCardNum" type="hidden"/>
                 <br/>
             </div>
@@ -43,7 +43,7 @@
         <div class="form-group required">
             <label class="col-sm-2 control-label" for="input-cc-cvv2">{{ entry_cc_cvv2 }}</label>
             <div class="col-sm-10">
-                <iframe data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/ifield.htm" frameborder="0" width="100%" height="33"></iframe>
+                <iframe data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/2.3.1808.2101/ifield.htm" frameborder="0" width="100%" height="34"></iframe>
                 <input data-ifields-id="cvv-token" name="xCVV" type="hidden"/>
                 <label data-ifields-id="card-data-error" id="ifieldsError"></label>
             </div>
@@ -56,60 +56,77 @@
     </div>
 </div>
 <script type="text/javascript"><!--
- $.getScript("https://cdn.cardknox.com/ifields/ifields.min.js", function() {
-    console.log('Load was performed.');
     var token = "{{ cardknox_token_key }}";
-    console.log(token);
-    setAccount(token, "OpenCart3", "0.1.2");
-});
-$('#button-confirm').on('click', function(event) {
-    event.preventDefault();
-    getTokens(
-        function () {
-            //onSuccess
-            //perform your own validation here...
-            if ($("input[name=xCardNum]").val() === '') {
-            alert("Card number required");
-            event.preventDefault = false;
-                return; 
-            }
-            if ($("input[name=xCVV]").val() === '') {
-            alert("CVV rquired");
-            event.preventDefault = false;
-                return; 
-            }
-            $.ajax({
-                url: 'index.php?route=extension/payment/cardknox/send',
-                type: 'post',
-                data: $('#payment :input'),
-                dataType: 'json',
-                cache: false,
-                beforeSend: function() {
-                
-                $('#button-confirm').button('loading');
-                },
-                complete: function() {
-                $('#button-confirm').button('reset');
-                },
-                success: function(json) {
-                if (json['error']) {
-                    alert(json['error']);
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.onload = function() {
+        enableLogging();
+        setAccount(token, "OpenCart3", "0.1.2");
+         var style = {
+            border: '1px solid #cccccc',
+            'font-size': '12px',
+            'padding-bottom': '6px',
+            'padding-left': '12px',
+            'padding-right': '12px',
+            'padding-top': '6px',
+            width: '254.5px',
+            height: '20px',
+            margin: '0px'
+        };
+        setIfieldStyle('card-number', style);
+        setIfieldStyle('cvv', style);
+    }
+    script.src = 'https://cdn.cardknox.com/ifields/2.3.1808.2101/ifields.min.js';
+    head.appendChild(script);
+    $('#button-confirm').on('click', function(event) {
+        event.preventDefault();
+        getTokens(
+            function () {
+                //onSuccess
+                //perform your own validation here...
+                if ($("input[name=xCardNum]").val() === '') {
+                alert("Card number required");
+                event.preventDefault = false;
+                    return; 
                 }
+                if ($("input[name=xCVV]").val() === '') {
+                alert("CVV rquired");
+                event.preventDefault = false;
+                    return; 
+                }
+                $.ajax({
+                    url: 'index.php?route=extension/payment/cardknox/send',
+                    type: 'post',
+                    data: $('#payment :input'),
+                    dataType: 'json',
+                    cache: false,
+                    beforeSend: function() {
+                    
+                    $('#button-confirm').button('loading');
+                    },
+                    complete: function() {
+                    $('#button-confirm').button('reset');
+                    },
+                    success: function(json) {
+                    if (json['error']) {
+                        alert(json['error']);
+                    }
 
-                if (json['redirect']) {
-                    location = json['redirect'];
-                }
-                }
-            });
-        },
-        function () {
-            //onError
-            alert(document.getElementById('ifieldsError').textContent);
-            event.preventDefault = false;
-            return;
-        },
-        //5 second timeout
-        5000
-    );
-});
+                    if (json['redirect']) {
+                        location = json['redirect'];
+                    }
+                    }
+                });
+            },
+            function () {
+                //onError
+                alert(document.getElementById('ifieldsError').textContent);
+                event.preventDefault = false;
+                return;
+            },
+            //5 second timeout
+            30000
+        );
+    });
 //--></script>
