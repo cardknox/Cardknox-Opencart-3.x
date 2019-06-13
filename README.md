@@ -2,4 +2,4 @@
 Cardknox Gateway plugin for Opencart 3.x
 
 ## logs
-logs are located at storege/logs/cardknox.log
+logs are located at storage/logs/cardknox.log
