@@ -22,8 +22,6 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				'value' => strftime('%Y', mktime(0, 0, 0, 1, 1, $i))
 			);
 		}
-		$log = new Log('LOG_NAME.log');
-		$this->log->write('TEXT = ');
 		$data['cardknox_token_key'] = $this->config->get('payment_cardknox_token_key');
 		// $this->document->addScript('https://cdn.cardknox.com/ifields/ifields.min.js');
 		return $this->load->view('extension/payment/cardknox', $data);
@@ -39,9 +37,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$data = array();
 
 		$data['xKey'] = $this->config->get('payment_cardknox_transaction_key');
-		$data['xVersion'] = '4.5.5';
+		$data['xVersion'] = '4.5.8';
 		$data['xSoftwareName'] = 'OpenCart';
-		$data['xSoftwareVersion'] = '1.0.1';
+		$data['xSoftwareVersion'] = '1.0.2';
 
 		$data['xBillFirstname'] = html_entity_decode($order_info['payment_firstname'], ENT_QUOTES, 'UTF-8');
 		$data['xBillLastname'] = html_entity_decode($order_info['payment_lastname'], ENT_QUOTES, 'UTF-8');
@@ -83,40 +81,31 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			$data['xShipZip'] = html_entity_decode($order_info['payment_postcode'], ENT_QUOTES, 'UTF-8');
 			$data['xShipCountry'] = html_entity_decode($order_info['payment_country'], ENT_QUOTES, 'UTF-8');
 		}
-		// var_dump($data);
-		$this->log->write($data);
-		$curl = curl_init($url);
+		
+		$replacements = array('xKey' => "******", 'xCardNum' => "******", 'xCVV' => "******");	
 
-		curl_setopt($curl, CURLOPT_PORT, 443);
-		curl_setopt($curl, CURLOPT_HEADER, 0);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+		$this->logger(array_replace($data, $replacements));
+		
+		
+		$curl = curl_init($url);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($curl, CURLOPT_FORBID_REUSE, 1);
-		curl_setopt($curl, CURLOPT_FRESH_CONNECT, 1);
 		curl_setopt($curl, CURLOPT_POST, 1);
-		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
-		curl_setopt($curl, CURLOPT_TIMEOUT, 10);
 		curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
 
-		$response = curl_exec($curl);
+		$apiResponse = curl_exec($curl);
 		$json = array();
 
 		if (curl_error($curl)) {
 			$json['error'] = 'CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl);
 
-			$this->log->write('CARDKNOX CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl));
-		} elseif ($response) {
-			$i = 1;
-
+			$this->logger('CARDKNOX CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl));
+		} elseif ($apiResponse) {
 			$response_info = array();
-
-			parse_str($response, $response_info);
-
-
-
-			if (empty( $response_info['xError']) ){
+			parse_str($apiResponse, $response_info);
+			$this->logger($response_info);
+			if (( $response_info['xResult'] == 'A') ){
 				$message = '';
-
+				$comment = '';
 				if (isset($response_info['xAuthCode'])) {
 					$message .= 'Authorization Code: ' . $response_info['xAuthCode'] . "\n";
 				}
@@ -132,8 +121,10 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				if (isset($response_info['xCVVResult'])) {
 					$message .= 'Card Code Response: ' . $response_info['xCVVResponse'] . "\n";
 				}
-				$comment = $response_info['xRefNum'] . " " . $response_info['xStatus'];
-				$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $comment, true);
+				if (isset($response_info['xStatus']) ) {
+					$message .= 'Status: ' . $response_info['xStatus'] . "\n";;
+				}
+				$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
 				$json['redirect'] = $this->url->link('checkout/success', '', true);
 			} else {
 				$json['error'] = $response_info['xError'];
@@ -141,13 +132,23 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		} else {
 			$json['error'] = 'Empty Gateway Response';
 
-			$this->log->write('Cardknox CURL ERROR: Empty Gateway Response');
+			$this->logger('Cardknox CURL ERROR: Empty Gateway Response');
 		}
-
 		curl_close($curl);
-
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
+	}
+
+	public function error() {
+		$json = array();
+		$this->logger($this->request->post);
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput('');
+	}
+
+	public function logger($message) {
+		$log = new Log('cardknox.log');
+		$log->write($message);
 	}
 }
 ?>
