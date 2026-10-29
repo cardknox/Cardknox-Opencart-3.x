@@ -23,16 +23,16 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			$data['error_warning'] = '';
 		}
 
-		if (isset($this->error['login'])) {
-			$data['error_login'] = $this->error['login'];
+		if (isset($this->error['transaction_key'])) {
+			$data['error_transaction_key'] = $this->error['transaction_key'];
 		} else {
-			$data['error_login'] = '';
+			$data['error_transaction_key'] = '';
 		}
 
-		if (isset($this->error['key'])) {
-			$data['error_key'] = $this->error['key'];
+		if (isset($this->error['token_key'])) {
+			$data['error_token_key'] = $this->error['token_key'];
 		} else {
-			$data['error_key'] = '';
+			$data['error_token_key'] = '';
 		}
 
 		$data['breadcrumbs'] = array();
@@ -120,12 +120,12 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			$this->error['warning'] = $this->language->get('error_permission');
 		}
 
-		if (!$this->request->post['payment_cardknox_transaction_key']) {
-			$this->error['login'] = $this->language->get('error_transaction_key');
+		if (empty($this->request->post['payment_cardknox_transaction_key'])) {
+			$this->error['transaction_key'] = $this->language->get('error_transaction_key');
 		}
 
-		if (!$this->request->post['payment_cardknox_token_key']) {
-			$this->error['key'] = $this->language->get('error_token_key');
+		if (empty($this->request->post['payment_cardknox_token_key'])) {
+			$this->error['token_key'] = $this->language->get('error_token_key');
 		}
 
 		return !$this->error;

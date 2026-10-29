@@ -58,13 +58,12 @@
 <script
     type="text/javascript">
     <!--
-    var token = "{{ cardknox_token_key }}";
+    var token = "{{ cardknox_token_key|e('js') }}";
     var head = document.getElementsByTagName('head')[0];
     var script = document.createElement('script');
     script.type = 'text/javascript';
     script.onload = function () {
-        enableLogging();
-        setAccount(token, "OpenCart3", "0.1.2");
+        setAccount(token, "OpenCart3", "1.1.0");
         var style = {
             border: '1px solid #cccccc',
             'font-size': '12px',
